@@ -1,11 +1,13 @@
+from google.cloud import aiplatform
 import vertexai
 import streamlit as st
 from vertexai.preview import generative_models
 from vertexai.preview.generative_models import GenerativeModel, Tool, Part, Content, ChatSession
 from services.flight_manager import search_flights, book_flights
+from fastapi import HTTPException 
 
 project = "noble-trainer-415011"
-vertexai.init(project = project)
+vertexai.init(project=project)
 
 # Define Tool
 get_search_flights = generative_models.FunctionDeclaration(
@@ -35,101 +37,53 @@ get_search_flights = generative_models.FunctionDeclaration(
         ]
     },
 )
-
-# Define tool and model with tools
-search_tool = generative_models.Tool(
-    function_declarations=[get_search_flights],
-)
-
-book_flights_declaration = generative_models.FunctionDeclaration(
-    name="book_flights",
-    description="Tool for booking a flight with flight_id, seat_type, and num_seats",
+get_book_flights = generative_models.FunctionDeclaration(
+    name="get_book_flights",
+    description="Tool for booking a flight with flight number, seat type, and number of seats to book.",
     parameters={
         "type": "object",
         "properties": {
-            "flight_id": {
-                "type": "integer",
-                "description": "The unique identifier of the flight to book."
+            "flight_number": {
+                "type": "string",
+                "description": "The number of the flight the ticket is to be booked."
             },
             "seat_type": {
                 "type": "string",
-                "enum": ["economy", "business", "first_class"],
-                "description": "The class of the seat to book (economy, business, or first_class)."
+                "description": "The type of seat that is to be booked such as 'economy', 'first class' or 'business class'."
             },
             "num_seats": {
                 "type": "integer",
-                "description": "The number of seats to book."
-            }
+                "description": "The number of seats that is to be booked."
+            },
         },
         "required": [
-            "flight_id",
-            "seat_type",
-            "num_seats"
+            "origin",
+            "destination",
+            "departure_date"
         ]
     },
-),
-
-book_tool = generative_models.Tool(
-    function_declarations=[book_flights_declaration],
 )
 
+# Define tool and model with tools
+search_tool = generative_models.Tool(
+    function_declarations=[get_search_flights, get_book_flights],
+)
+# Define tool and model with tools
 config = generative_models.GenerationConfig(temperature=0.4)
 # Load model with config
 model = GenerativeModel(
     "gemini-pro",
-    tools = [search_tool, book_tool],
-    generation_config = config
+    tools=[search_tool],
+    generation_config=config
 )
-
-
-
-# def handle_response(response):
-#     # Check for function call with intermediate step, always return response
-#     if response.candidates[0].content.parts[0].function_call.args:
-#         # Function call exists, unpack and load into a function
-#         response_args = response.candidates[0].content.parts[0].function_call.args
-        
-#         function_params = {}
-#         for key in response_args:
-#             value = response_args[key]
-#             function_params[key] = value
-        
-#         print(response.candidates[0].content.parts[0].function_call.name)
-#         # Check if it's a search or book function
-#         if "get_search_flights" in response.candidates[0].content.parts[0].function_call.name:
-#             results = search_flights(**function_params)
-#             if results:
-#                 intermediate_response = chat.send_message(
-#                     Part.from_function_response(
-#                         name="get_search_flights",
-#                         response=results
-#                     )
-#                 )
-#                 return intermediate_response.candidates[0].content.parts[0].text
-#             else:
-#                 return "Search Failed"
-#         elif "book_flights" in response.candidates[0].content.parts[0].function_call.name:
-#             results = book_flights(**function_params)
-#             if results:
-#                 intermediate_response = chat.send_message(
-#                     Part.from_function_response(
-#                         name="book_flights",
-#                         response=results
-#                     )
-#                 )
-#                 return intermediate_response.candidates[0].content.parts[0].text
-#         else:
-#             return "booking failed"
-#     else:
-#         # Return just text
-#         return response.candidates[0].content.parts[0].text
 
 def handle_response(response):
     # Check if the response structure is as expected
-    print(response)
+    print("I am inside the handle_response")
+    print("response", response)
     
     # Check for function call with intermediate step, always return response
-    if response.candidates[0].content.parts and response.candidates[0].content.parts[0].function_call:
+    if response.candidates[0].content.parts[0].function_call.args:
         # Function call exists, unpack and load into a function
         response_args = response.candidates[0].content.parts[0].function_call.args
         
@@ -151,65 +105,51 @@ def handle_response(response):
                 return intermediate_response.candidates[0].content.parts[0].text
             else:
                 return "Search Failed"
-        elif "book_flights" in response.candidates[0].content.parts[0].function_call.name:
+        elif "get_book_flights" in response.candidates[0].content.parts[0].function_call.name:
             results = book_flights(**function_params)
             if results:
                 intermediate_response = chat.send_message(
                     Part.from_function_response(
-                        name="book_flights",
+                        name="get_book_flights",
                         response=results
                     )
                 )
                 return intermediate_response.candidates[0].content.parts[0].text
-        else:
-            return "booking failed"
+            else:
+                return "Booking failed"
+        else: 
+            return "Something went wrong."
     else:
         # Return just text
         return response.candidates[0].content.parts[0].text
 
-
-# Define new function to handle booking tool
-# def book_flights_tool(chat: ChatSession, query):
-#     response = chat.send_message(query)
-#     output = handle_booking_response(response)
-    
-#     with st.chat_message("model"):
-#         st.markdown(output)
-    
-#     st.session_state.messages.append(
-#         {
-#             "role": "user",
-#             "content": query
-#         }
-#     )
-#     st.session_state.messages.append(
-#         {
-#             "role": "model",
-#             "content": output
-#         }
-#     )
-# helper function to display and send streamlit messages
 def llm_function(chat: ChatSession, query):
+    print("type of chat", type(chat))
+    print("type of query", type(query))
+    print("Query content:", query)
     response = chat.send_message(query)
-    output = handle_response(response)
-    
-    with st.chat_message("model"):
-        st.markdown(output)
-    
-    st.session_state.messages.append(
-        {
-            "role": "user",
-            "content": query
-        }
-    )
-    st.session_state.messages.append(
-        {
-            "role": "model",
-            "content": output
-        }
-    )
+    if response:
+        output = handle_response(response)
+        print("I am done with handle_response")
+        with st.chat_message("model"):
+            st.markdown(output)
+        
+        st.session_state.messages.append(
+            {
+                "role": "user",
+                "content": query
+            }
+        )
+        st.session_state.messages.append(
+            {
+                "role": "model",
+                "content": output
+            }
+        )
+    else: 
+        print("response not created.")   
 
-st.title("Gemini Flights")
+st.title("Flights")
 
 chat = model.start_chat()
 
@@ -234,13 +174,15 @@ for index, message in enumerate(st.session_state.messages):
 if len(st.session_state.messages) == 0:
     # Invoke initial message
     initial_prompt = "Introduce yourself as a flights management assistant, ReX, powered by Google Gemini and designed to search/book flights. You use emojis to be interactive. For reference, the year for dates is 2024"
+    # initial_prompt = "Hello"
     llm_function(chat, initial_prompt)
 
-
-# For capture user input
-query = st.chat_input("Gemini Flights")
-
+    # For capture user input
+    # query = st.chat_input("Flights")
+query = st.chat_input("Ask me about flights:")
+print("query created", query)
 if query:
     with st.chat_message("user"):
         st.markdown(query)
+    print("chatinquery", chat)
     llm_function(chat, query)

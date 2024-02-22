@@ -6,8 +6,18 @@ from typing import Optional
 from fastapi import Depends, HTTPException
 from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
-from models import Flight, FlightModel, FlightSearchCriteria, get_db
+import models
+from models import Flight, FlightModel, FlightSearchCriteria, get_db, FlightBookCriteria
 import logging
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+DATABASE_URL = "sqlite:///./flights.db"
+engine = create_engine(DATABASE_URL)
+
+# Configure the session
+Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+DATA = Session()
 
 # Create a logger for this module
 logger = logging.getLogger(__name__)
@@ -75,8 +85,9 @@ def generate_flights(flight_input, num_flights, db: Session):
         db.add(new_flight)
         db.commit()
         db.refresh(new_flight)
+        flights.append(new_flight)
         logging.info(f"Successfully added flight: {new_flight.flight_number}")
-        
+     
     return flights
 
 def handle_flight_search(criteria, db: Session, page: Optional[int] = 1, page_size: Optional[int] = 10):
@@ -108,8 +119,8 @@ def handle_flight_search(criteria, db: Session, page: Optional[int] = 1, page_si
     A dictionary containing the number of query results, a list of flight models, the current page, and 
     total number of pages.
     """
-    query = db.query(Flight)
     
+    query = db.query(Flight)
     departure_datetime = datetime.combine(criteria.departure_date, time.min)
 
     # Start building the query with basic filters
@@ -181,7 +192,8 @@ def handle_flight_search(criteria, db: Session, page: Optional[int] = 1, page_si
 
     # Convert SQLAlchemy models to Pydantic models
     flight_models = [FlightModel.from_orm(flight) for flight in flights]
-
+    
+    print("DATA", DATA)
     # Return the query results
     return {
         "query_results": len(flight_models),
@@ -189,6 +201,7 @@ def handle_flight_search(criteria, db: Session, page: Optional[int] = 1, page_si
         "page": page,
         "total_pages": total_pages
     }
+
 
 def handle_flight_book(flight_id: int, seat_type: str, num_seats: int = 1, db: Session = Depends(get_db)):
     """
@@ -215,7 +228,7 @@ def handle_flight_book(flight_id: int, seat_type: str, num_seats: int = 1, db: S
     """
     # Retrieve the flight from the database
     flight = db.query(Flight).filter(Flight.flight_id == flight_id).first()
-
+    
     if not flight:
         return "Flight not found."
 
@@ -285,3 +298,62 @@ def search_flights(**params):
 
     # Returning the JSON response
     return response.json()
+
+
+def book_flights(**params):
+    """
+    Books a specified number of seats on a flight using the FastAPI endpoint.
+
+    This function fetches the flight_id corresponding to the given flight_number from the database
+    and sends a POST request to the FastAPI endpoint responsible for booking flights.
+    It provides the necessary parameters such as flight_id, seat_type, and num_seats.
+
+    Parameters:
+    - flight_number (str): The flight number to book.
+    - seat_type (str): The class of the seat to book (economy, business, or first_class).
+    - num_seats (int): The number of seats to book.
+
+    Returns:
+    The response from the FastAPI endpoint as a JSON object.
+    """
+    criteria = FlightBookCriteria(**params)
+    # Assuming you have a function to get the flight_id from the database based on flight_number
+    # database = Depends(models.get_db)
+    
+    flight_id = get_flight_id_from_flight_number(criteria.flight_number)
+    if not flight_id: 
+        return None
+    # Constructing the URL for booking flights
+    url = f"http://127.0.0.1:8000/book_flight?flight_id={flight_id}&seat_type={criteria.seat_type}&num_seats={criteria.num_seats}"
+
+    # Creating the payload for the POST request
+    payload = {
+        "flight_id": flight_id,
+        "seat_type": criteria.seat_type,
+        "num_seats": criteria.num_seats
+    }
+
+    # Making the POST request
+    response = requests.post(url, json=payload, headers={'accept': 'application/json'})
+    print("Booking URL:", url)  # Add this line
+    print("Payload:", payload)  # Add this line
+    print("Response Status Code:", response.status_code)  # Add this line
+    print("Response Text:", response.text)  # Add this line
+
+    # Returning the JSON response
+    return response.json()
+
+def get_flight_id_from_flight_number(flight_number: str):
+    try:
+        query = DATA.query(Flight).filter(Flight.flight_number == flight_number)
+        flight = query.first()
+        
+        if flight:
+            return flight.flight_id
+        else:
+            return None
+    except Exception as e:
+        print(f"Error in get_flight_id_from_flight_number: {e}")
+        return None
+
+
