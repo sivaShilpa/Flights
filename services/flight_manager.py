@@ -193,7 +193,6 @@ def handle_flight_search(criteria, db: Session, page: Optional[int] = 1, page_si
     # Convert SQLAlchemy models to Pydantic models
     flight_models = [FlightModel.from_orm(flight) for flight in flights]
     
-    print("DATA", DATA)
     # Return the query results
     return {
         "query_results": len(flight_models),
@@ -255,6 +254,8 @@ def handle_flight_book(flight_id: int, seat_type: str, num_seats: int = 1, db: S
 
     # Return a success message
     return {"message": success_message, "flight_info": flight}
+
+
 
 def search_flights(**params):
     """
@@ -331,5 +332,8 @@ def get_flight_id_from_flight_number(flight_number: str):
     except Exception as e:
         print(f"Error in get_flight_id_from_flight_number: {e}")
         return None
+    
+
+
 
 
