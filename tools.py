@@ -6,7 +6,7 @@ from vertexai.preview.generative_models import GenerativeModel, Tool, Part, Cont
 from services.flight_manager import search_flights, book_flights
 from fastapi import HTTPException 
 
-project = "noble-trainer-415011"
+project = "flights-415514"
 vertexai.init(project=project)
 
 # Define Tool
@@ -77,21 +77,15 @@ model = GenerativeModel(
     generation_config=config
 )
 
-def handle_response(response):
-    # Check if the response structure is as expected
-    print("I am inside the handle_response")
-    print("response", response)
-    
+def handle_response(response):    
     # Check for function call with intermediate step, always return response
     if response.candidates[0].content.parts[0].function_call.args:
         # Function call exists, unpack and load into a function
-        response_args = response.candidates[0].content.parts[0].function_call.args
-        
+        response_args = response.candidates[0].content.parts[0].function_call.args        
         function_params = {}
         for key in response_args:
             value = response_args[key]
-            function_params[key] = value
-        
+            function_params[key] = value        
         # Check if it's a search or book function
         if "get_search_flights" in response.candidates[0].content.parts[0].function_call.name:
             results = search_flights(**function_params)
@@ -124,16 +118,11 @@ def handle_response(response):
         return response.candidates[0].content.parts[0].text
 
 def llm_function(chat: ChatSession, query):
-    print("type of chat", type(chat))
-    print("type of query", type(query))
-    print("Query content:", query)
     response = chat.send_message(query)
     if response:
         output = handle_response(response)
-        print("I am done with handle_response")
         with st.chat_message("model"):
-            st.markdown(output)
-        
+            st.markdown(output)        
         st.session_state.messages.append(
             {
                 "role": "user",
@@ -176,13 +165,10 @@ if len(st.session_state.messages) == 0:
     initial_prompt = "Introduce yourself as a flights management assistant, ReX, powered by Google Gemini and designed to search/book flights. You use emojis to be interactive. For reference, the year for dates is 2024"
     # initial_prompt = "Hello"
     llm_function(chat, initial_prompt)
-
-    # For capture user input
-    # query = st.chat_input("Flights")
+ 
 query = st.chat_input("Ask me about flights:")
 print("query created", query)
 if query:
     with st.chat_message("user"):
         st.markdown(query)
-    print("chatinquery", chat)
     llm_function(chat, query)
