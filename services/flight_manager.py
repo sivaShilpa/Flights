@@ -292,10 +292,8 @@ def search_flights(**params):
         url += f"&max_cost={criteria.max_cost}"
 
     url += "&page=1&page_size=10"
-
     # Making the GET request
     response = requests.get(url, headers={'accept': 'application/json'})
-
     # Returning the JSON response
     return response.json()
 
@@ -315,10 +313,6 @@ def book_flights(**params):
     }
     # Making the POST request
     response = requests.post(url, json=payload, headers={'accept': 'application/json'})
-    print("Booking URL:", url)  # Add this line
-    print("Payload:", payload)  # Add this line
-    print("Response Status Code:", response.status_code)  # Add this line
-    print("Response Text:", response.text)  # Add this line
     # Returning the JSON response
     return response.json()
 def get_flight_id_from_flight_number(flight_number: str):

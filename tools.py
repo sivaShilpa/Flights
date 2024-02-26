@@ -167,7 +167,6 @@ if len(st.session_state.messages) == 0:
     llm_function(chat, initial_prompt)
  
 query = st.chat_input("Ask me about flights:")
-print("query created", query)
 if query:
     with st.chat_message("user"):
         st.markdown(query)
