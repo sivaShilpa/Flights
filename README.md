@@ -55,7 +55,7 @@ Implement the book_flight function in Flight_Manager.py, define its function dec
 - Thanks to Aniketh Rai for helping me solve some errors
 
 ## Loom Video Created 
-Click ["here"](https://jam.dev/c/78af6b0f-1e5b-452e-9680-0275bbd1fc15) to wacth the demonstration.
+Click [here](https://jam.dev/c/78af6b0f-1e5b-452e-9680-0275bbd1fc15) to wacth the demonstration.
 
 ## About RadicalX
 ![RadicalX](https://i.imgur.com/1yxvh5u.png)
