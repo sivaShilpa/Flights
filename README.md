@@ -1,60 +1,62 @@
-# Gemini Flight Manager
+# Gemini Flights 
 
-## Overview
+## Description
 
-Gemini Flight Manager is a comprehensive backend system built using FastAPI, designed for managing and simulating flight-related operations. This system provides a robust platform for handling various aspects of flight management, including flight generation, search, and booking functionalities.
+Gemini Flights is an intermediate level mission created by Mikhail Ocampo at RadicalX. The app was set up in a way that it introduces itself as a Google Gemini Powered agent which helps the user with flight details such as searching for available flights when the user gives a prompt to search for a flight with origin and destination on a specific date. The mission for the interns  is to create a booking tool for the app where it books a flight ticket for the user when prompted for a specific flight and seat type such as 'economy', 'business class', 'first class'.
 
-The project leverages FastAPI's efficient and easy-to-use framework to create a high-performance, scalable solution ideal for flight data management. It comes equipped with an SQLite database (`flights.db`) pre-populated with initial data, allowing for quick deployment and testing.
+## Steps Involved
 
-Key features of Gemini Flight Manager include:
-- Advanced search capabilities to query flights based on criteria like origin, destination, and dates.
-- Booking system that handles seat availability across different classes and calculates costs accordingly.
+### Step 1
+Setting up Google Cloud Account. Create a project in Google cloud. Enable all recommended APIs in VertexAI section.
+### Step 2
+Fork premade fast API server from the provided link. Clone the forked GitHub account. Set up the Google Cloud project with the GitHub account and run the project on virtual environment, Backend and Frontend on separate terminals.
+### Step 3
+Integrate Google Cloud SDK for Vertex AI. Download, Install and initialize SDK and setup Python for VertexAI with proper authentication.
+### Step 4
+Define and load functions for Gemini Flights! Use FunctionDeclaration to craft the get_book_flights function, encapsulate it in a Tool class, and configure the GenerativeModel.
+### Step 5
+Implement a response handling system and integrate it with Streamlit for effective communication with Google Gemini. Ensure proper initialization of the chat session and handling of various response types.
+### Step 6
+Implement the book_flight function in Flight_Manager.py, define its function declaration, and update the tool class to bind the new function to Gemini for flight booking.
 
-Designed with extensibility and scalability in mind, Gemini Flight Manager is well-suited for both educational purposes and as a foundation for more complex flight management applications.
+## How the frontend performs
+!["frontend"](./assets/Booking%20of%20requested%20flight%20ticket%20frontend.png)
 
-**For the purposes of Gemini Function Calling, you will only need `search_flights` and `book_flight` functions.
+## How the backend performs
+!["backend"](./assets/Booking%20of%20requested%20flight%20ticket%20backend.png)
 
-## Installation
+## New code that was added
+!["flightBookCriteria"](./assets/FlightBookCriteriaInModels.png)
+!["bookFlightsFunction"](./assets/FlightManagerBookFlightsFunction.png)
+!["getBookFlights"](./assets/GetBookFlightsInTools.png)
+!["handleResponse"](./assets/HandleResponseChangeInTools.png)
 
-### Prerequisites
-Before you begin, ensure you have the following installed on your system:
-- Python 3.6 or higher
-- FastAPI
-- Uvicorn, an ASGI server for FastAPI
+## Technologies used
+### Tools used to build the project
+1. Google Cloud
+2. Google Gemini
+3. Fast API
+4. Streamlit
+5. Vertex AI
+6. Python
+7. Visual Studio Code
+8. GitHub
 
-### Step-by-Step Installation Guide
+### Tools used to research 
+1. ReX from RadicalX AI platform
+2. Google 
+3. Chat GPT
 
-1. **Clone the Repository**
-   
-   Start by cloning the repository to your local machine. Use the following command:
-   ```bash
-   git clone https://github.com/your-username/your-repository.git
-   cd your-repository
+## Acknowledgment
+- Thanks to Talha Sabri for this opportunity at RadicalX
 
-## Set Up a Virtual Environment (Optional but recommended)
+- Thanks to Mikhail Ocampo for building this mission
 
-It's a good practice to create a virtual environment for your Python projects. This keeps your project dependencies isolated. If you have `virtualenv` installed, create a new environment with:
+- Thanks to Aniketh Rai for helping me solve some errors
 
-```bash
-virtualenv venv
-source venv/bin/activate
-```
+## Loom Video Created 
+Click ["here"](https://jam.dev/c/78af6b0f-1e5b-452e-9680-0275bbd1fc15) to wacth the demonstration.
 
-## Install Dependencies
-Inside the virtual environment, install all necessary dependencies by running:
-```bash
-pip install -r requirements.txt
-```
-
-## Starting the FastAPI Server
-
-After the installation, you can start the FastAPI server using Uvicorn. Navigate to the project directory and run:
-
-```bash
-uvicorn main:app
-```
-
-## Accessing the API
-With the server running, you can access the API at `http://127.0.0.1:8000.`
-
-For interactive API documentation, visit `http://127.0.0.1:8000/docs`, where you can test the API endpoints directly from your browser.
+## About RadicalX
+![RadicalX](https://i.imgur.com/1yxvh5u.png)
+RadicalX is pioneering an immersive digital world designed specifically for Gen Z developers.
